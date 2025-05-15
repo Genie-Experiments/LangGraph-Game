@@ -1,11 +1,11 @@
-from typing import TypedDict, Literal, Optional, Annotated, List
+from typing import TypedDict, Literal, Optional, Annotated, List, Union
 import operator
 
 class NumberGameAgent(TypedDict):
     min: int
     max: int
     guess: int
-    next_step: Optional[Literal["start", "guessing", "done"]]
+    next_step: Optional[Literal["start", "guessing", "guessed number"]]
 
 class WordGameAgent(TypedDict):
     words: list[str]
@@ -16,12 +16,16 @@ class WordGameAgent(TypedDict):
     guess: Optional[str]
     asked_set: set[str]
 
-class GameState(TypedDict):
+class GameState(TypedDict, total=False):
     game_choice: Optional[Literal["number_game", "word_game", "retry"]]
     number_game_state: Optional[NumberGameAgent]
     word_game_state: Optional[WordGameAgent]
     word_game_count: int
     number_game_count: int
+
+    # New fields for API interaction
+    __user_input__: str
+    __messages__: list[str]
 
 def create_initial_state() -> GameState:
     return {
@@ -29,5 +33,7 @@ def create_initial_state() -> GameState:
         "number_game_state": None,
         "word_game_state": None,
         "word_game_count": 0,
-        "number_game_count": 0
+        "number_game_count": 0,
+        "__messages__": [],
+        "__user_input__": ""
     }

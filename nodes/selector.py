@@ -1,10 +1,30 @@
 from state import GameState
+from nodes.exit import exit_game
+
 
 def game_selector(state: GameState) -> GameState:
-    print("\nGame Selector")
-    choice = input("Enter '1' for number game or '2' for word game (or press Enter to quit): ").strip()
+    user_input = state.get("__user_input__", "").strip()
+    messages = []
 
-    if choice == "1":
+    if state.get("game_choice") == "word_game":
+        if not state.get("__messages__"):
+            messages.append("Continuing Word Game")
+        else:
+            return state
+    elif state.get("game_choice") == "number_game":
+        if not state.get("__messages__"):
+            messages.append("Continuing Number Game")
+        else:
+            return state
+
+    elif state.get("game_choice") == "retry":
+        state["game_choice"] = None
+
+        if user_input.lower() in ["yes", "y"]:
+            messages.append("Returning to game selection. Please select a game.")
+        else:
+            messages.append("Thanks for playing! Goodbye!")
+    elif user_input == "1":
         state.update({
             "game_choice": "number_game",
             "number_game_state": {
@@ -15,8 +35,8 @@ def game_selector(state: GameState) -> GameState:
             },
             "word_game_state": None
         })
-
-    elif choice == "2":
+        messages.append("Starting Number Guessing Game!")
+    elif user_input == "2":
         words = ["apple", "kiwi", "desk", "chair", "car", "pen"]
         state.update({
             "game_choice": "word_game",
@@ -31,21 +51,13 @@ def game_selector(state: GameState) -> GameState:
             },
             "number_game_state": None
         })
-
-    elif choice == "":
-        state["game_choice"] = None
-
+        messages.append("Starting Word Clue Guesser Game!")
+    elif user_input == "":
+        return exit_game(state)
     else:
-        print("Invalid choice. Defaulting to number game.")
-        state.update({
-            "game_choice": "number_game",
-            "number_game_state": {
-                "min": 1,
-                "max": 50,
-                "guess": 0,
-                "next_step": "start"
-            },
-            "word_game_state": None
-        })
+        state["game_choice"] = None
+        messages.append("Invalid choice. Please select a valid game option.")
 
+    if messages:
+        state["__messages__"] = messages
     return state
