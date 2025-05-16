@@ -9,8 +9,8 @@ model_name = os.getenv("OPENAI_MODEL", "gpt-3.5-turbo")
 temperature = float(os.getenv("OPENAI_TEMPERATURE", "0.7"))
 
 model = ChatOpenAI(
-    temperature=0.7,
-    model_name="gpt-3.5-turbo",
-    api_key="your-api-key"
+    temperature=temperature,
+    model_name=model_name,
+    api_key=api_key
 )
 
