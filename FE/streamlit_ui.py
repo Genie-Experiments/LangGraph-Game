@@ -1,8 +1,14 @@
 import streamlit as st
 import requests
 import json
-from state import create_initial_state, GameState
 import time
+from dotenv import load_dotenv
+load_dotenv()
+
+import sys, os
+sys.path.append(os.getenv("PYTHONPATH", "."))
+from langgraph_core.game_states.game_state import GameState, create_initial_state
+
 
 # Set page configuration with a dark theme
 st.set_page_config(

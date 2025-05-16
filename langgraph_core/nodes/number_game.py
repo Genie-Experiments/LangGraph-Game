@@ -1,4 +1,4 @@
-from state import GameState
+from langgraph_core.game_states.game_state import GameState
 
 
 def choose_number(state: GameState) -> GameState:
