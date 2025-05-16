@@ -13,6 +13,7 @@ The backend is powered by FastAPI and LangGraph agents, while the frontend is a 
    ```
    pip install -r requirements.txt
     ```
+   (Note: For this project, you will need python 3.12 or above)
    
 2. Setup your .env file with the necessary environment variables:
    ```
