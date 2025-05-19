@@ -2,25 +2,32 @@ from langgraph_core.game_states.game_state import GameState
 from langgraph_core.prompts.wg_prompts import get_question_prompt, guess_word_prompt
 from utils.model import model
 
+WORD_LIST = ["apple", "kiwi", "desk", "chair", "car", "pen"]
+MAX_QUESTIONS = 5
+
+def init_word_game_state(show_list: bool = False) -> dict:
+    return {
+        "words": WORD_LIST,
+        "max_number_of_questions": MAX_QUESTIONS,
+        "current_question_index": 0,
+        "questions": [],
+        "answers": [],
+        "guess": None,
+        "asked_set": set(),
+        "word_list_shown": show_list
+    }
+
+def append_question_prompt(messages: list, question: str, index: int):
+    messages.append(f"Question {index + 1}: {question}")
+    messages.append("Your answer? (yes/no/maybe)")
+
 def choose_word(state: GameState) -> GameState:
     state["__messages__"] = [
         "Think of a word from this list:",
-        "apple, kiwi, desk, chair, car, pen"
+        ", ".join(WORD_LIST)
     ]
-    if not state.get("word_game_state"):
-        state["word_game_state"] = {
-            "words": ["apple", "kiwi", "desk", "chair", "car", "pen"],
-            "max_number_of_questions": 5,
-            "current_question_index": 0,
-            "questions": [],
-            "answers": [],
-            "guess": None,
-            "asked_set": set(),
-            "word_list_shown": True
-        }
-    else:
-        state["word_game_state"]["current_question_index"] = 0
 
+    state["word_game_state"] = init_word_game_state(show_list=True)
     return state
 
 def get_question(wg):
@@ -51,33 +58,17 @@ def get_question(wg):
 
 
 def ask_questions(state: GameState) -> GameState:
-    if not state.get("word_game_state"):
-        words = ["apple", "kiwi", "desk", "chair", "car", "pen"]
-        state["word_game_state"] = {
-            "words": words,
-            "max_number_of_questions": 5,
-            "current_question_index": 0,
-            "questions": [],
-            "answers": [],
-            "guess": None,
-            "asked_set": set(),
-            "word_list_shown": False
-        }
+    if "word_game_state" not in state:
+        state["word_game_state"] = init_word_game_state()
 
     wg = state["word_game_state"]
     messages = []
 
     if wg["current_question_index"] < wg["max_number_of_questions"]:
-        try:
-            question = get_question(wg)
-            wg.setdefault("questions", []).append(question)
-            messages.append(f"Question {wg['current_question_index'] + 1}: {question}")
-            messages.append("Your answer? (yes/no/maybe)")
-            wg["current_question_index"] += 1
-        except Exception as e:
-            messages.append("I'm having trouble thinking of a question.")
-            messages.append("Your answer? (yes/no/maybe)")
-            wg["current_question_index"] += 1
+        question = get_question(wg)
+        wg["questions"].append(question)
+        append_question_prompt(messages, question, wg["current_question_index"])
+        wg["current_question_index"] += 1
 
     state["__messages__"] = messages
     return state
@@ -87,30 +78,32 @@ def guess_word(state: GameState) -> GameState:
     wg = state.get("word_game_state", {})
     user_input = state.get("__user_input__", "").strip().lower()
 
-    if user_input and wg.get("questions") and len(wg.get("questions", [])) > len(wg.get("answers", [])):
-        wg.setdefault("answers", []).append(user_input)
+    # Record latest user answer if one is pending
+    if user_input and len(wg["answers"]) < len(wg["questions"]):
+        wg["answers"].append(user_input)
 
     try:
-        qa_pairs = []
-        for i, q in enumerate(wg.get("questions", [])):
-            if i < len(wg.get("answers", [])):
-                qa_pairs.append(f"Q{i + 1}: {q} A: {wg['answers'][i]}")
+        qa_pairs = [
+            f"Q{i + 1}: {q} A: {wg['answers'][i]}"
+            for i, q in enumerate(wg["questions"])
+            if i < len(wg["answers"])
+        ]
 
         qa_text = "\n".join(qa_pairs)
 
         guess = model.invoke(guess_word_prompt.format(
-            words=", ".join(wg.get("words", [])),
+            words=", ".join(wg["words"]),
             qa=qa_text
         )).content.strip()
 
         wg["guess"] = guess
-    except Exception as e:
-        wg["guess"] = wg.get("words", ["apple"])[0]
+
+    except Exception:
+        wg["guess"] = WORD_LIST[0]
 
     state["word_game_count"] = state.get("word_game_count", 0) + 1
-
     state["__messages__"] = [
-        f"My guess is: **{wg.get('guess')}**",
+        f"My guess is: **{wg['guess']}**",
         "Was I correct? (yes/no)"
     ]
 

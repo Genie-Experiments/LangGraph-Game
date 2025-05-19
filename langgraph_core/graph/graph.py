@@ -61,7 +61,7 @@ workflow.add_conditional_edges(
         else "guess_word"
     ),
     {
-        "asking questions": "ask_questions",
+        "ask_questions": "ask_questions",
         "guess_word": "guess_word"
     }
 )

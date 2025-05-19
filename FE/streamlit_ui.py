@@ -3,12 +3,13 @@ import requests
 import json
 import time
 from dotenv import load_dotenv
+
 load_dotenv()
 
 import sys, os
+
 sys.path.append(os.getenv("PYTHONPATH", "."))
 from langgraph_core.game_states.game_state import GameState, create_initial_state
-
 
 # Set page configuration with a dark theme
 st.set_page_config(
@@ -112,6 +113,13 @@ st.markdown("""
         background-color: #3a78e7;
     }
     .stTextInput > div > div > input {
+        background-color: #27344d;
+        color: white;
+        border: 1px solid #3e4a7a;
+    }
+
+    /* Dropdown styling */
+    .stSelectbox > div > div {
         background-color: #27344d;
         color: white;
         border: 1px solid #3e4a7a;
@@ -292,6 +300,7 @@ if st.session_state.page == 'home':
                     for msg in result.get("__messages__", []):
                         st.session_state.messages.append({"type": "system", "content": msg})
                     navigate_to('gameplay')
+                    st.rerun()
                 else:
                     st.error("Failed to start game. Please try again.")
         st.markdown('</div>', unsafe_allow_html=True)
@@ -330,6 +339,7 @@ if st.session_state.page == 'home':
                     for msg in result.get("__messages__", []):
                         st.session_state.messages.append({"type": "system", "content": msg})
                     navigate_to('gameplay')
+                    st.rerun()
                 else:
                     st.error("Failed to start game. Please try again.")
         st.markdown('</div>', unsafe_allow_html=True)
@@ -413,11 +423,46 @@ elif st.session_state.page == 'gameplay':
         if st.button("I've Selected a Word", key="ready_button"):
             submit_response("")  # Empty response to start the game
     else:
-        # All other cases - show normal input
-        user_input = st.text_input("Your response:", key=f"user_input_{st.session_state.input_key}")
-        submit = st.button("Submit")
-        if submit or (user_input and len(user_input.strip()) > 0):
-            submit_response(user_input.strip())
+        # Check if this is the number game and requires yes/no response
+        if st.session_state.game_type == "number_game" and any(phrase in last_message for phrase in
+                                                               ["Is your number greater than",
+                                                                "Is your number higher than",
+                                                                "Is your number less than",
+                                                                "Is your number lower than",
+                                                                "Is your number equal to"]) and "(y/n)" in last_message:
+            # Use a dropdown for yes/no in the number game
+            yes_no_options = ["Select response", "y", "n"]
+            user_selection = st.selectbox("Select your response:",
+                                          yes_no_options,
+                                          index=0,
+                                          key=f"yes_no_select_{st.session_state.input_key}")
+
+            submit = st.button("Submit")
+            if submit and user_selection != "Select response":
+                submit_response(user_selection)
+            elif submit and user_selection == "Select response":
+                st.warning("Please select an option before submitting.")
+        # Check if this is the word game and requires yes/no/maybe response
+        elif st.session_state.game_type == "word_game" and ("Your answer? (yes/no/maybe)" in last_message or
+                                                            "(yes/no/maybe)" in last_message):
+            # Use a dropdown for yes/no/maybe in the word game
+            options = ["Select response", "yes", "no", "maybe"]
+            user_selection = st.selectbox("Select your response:",
+                                          options,
+                                          index=0,
+                                          key=f"word_game_select_{st.session_state.input_key}")
+
+            submit = st.button("Submit")
+            if submit and user_selection != "Select response":
+                submit_response(user_selection)
+            elif submit and user_selection == "Select response":
+                st.warning("Please select an option before submitting.")
+        else:
+            # All other cases - show normal input
+            user_input = st.text_input("Your response:", key=f"user_input_{st.session_state.input_key}")
+            submit = st.button("Submit")
+            if submit or (user_input and len(user_input.strip()) > 0):
+                submit_response(user_input.strip())
 
     # Add "Back to Home" button (only show if not already on the play again screen)
     if not is_play_again and not is_number_guessed:
