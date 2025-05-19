@@ -1,8 +1,10 @@
-from state import GameState
+from langgraph_core.game_states.game_state import GameState
 
 
 def exit_game(state: GameState) -> GameState:
-
+    """
+    Generate final game statistics and prepare exit message.
+    """
     number_games = state.get("number_game_count", 0)
     word_games = state.get("word_game_count", 0)
 

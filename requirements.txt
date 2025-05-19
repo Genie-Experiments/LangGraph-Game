@@ -1,0 +1,10 @@
+streamlit~=1.45.1
+requests~=2.32.3
+dotenv~=0.9.9
+python-dotenv~=1.1.0
+fastapi~=0.115.12
+pydantic~=2.11.4
+langchain-openai~=0.3.17
+uvicorn~=0.34.2
+langgraph~=0.4.3
+langchain-core~=0.3.59

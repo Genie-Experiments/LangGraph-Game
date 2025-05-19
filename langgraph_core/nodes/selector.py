@@ -1,5 +1,5 @@
-from state import GameState
-from nodes.exit import exit_game
+from langgraph_core.game_states.game_state import GameState
+from langgraph_core.nodes.exit import exit_game
 
 
 def game_selector(state: GameState) -> GameState:
