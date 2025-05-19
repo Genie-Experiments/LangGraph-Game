@@ -54,7 +54,7 @@ def get_question(wg):
         return question
 
     except Exception as e:
-        return "Is it something you use daily?"
+        return e
 
 
 def ask_questions(state: GameState) -> GameState:
